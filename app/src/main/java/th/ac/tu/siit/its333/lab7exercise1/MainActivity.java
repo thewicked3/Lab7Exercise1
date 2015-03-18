@@ -36,12 +36,41 @@ public class MainActivity extends ActionBarActivity {
         w.execute("http://ict.siit.tu.ac.th/~cholwich/bangkok.json", "Bangkok Weather");
     }
 
-    public void buttonClicked(View v) {
+
+    long prevb=0;
+    long prevn=0;
+    long prevp=0;
+    public void  buttonClicked(View v) {
+
+        long click = System.currentTimeMillis();
+
+
         int id = v.getId();
         WeatherTask w = new WeatherTask();
         switch (id) {
             case R.id.btBangkok:
-                w.execute("http://ict.siit.tu.ac.th/~cholwich/bangkok.json", "Bangkok Weather");
+                if(click - prevb > 60000) {
+                    w.execute("http://ict.siit.tu.ac.th/~cholwich/bangkok.json", "Bangkok Weather");
+                    prevb = click;
+                    prevn =0;
+                    prevp=0;
+                }
+                 break;
+            case R.id.btNon:
+                if(click - prevn > 60000) {
+                    w.execute("http://ict.siit.tu.ac.th/~cholwich/nonthaburi.json", "Nonthaburi Weather");
+                    prevn = click;
+                    prevb =0;
+                    prevp=0;
+                }
+                break;
+            case R.id.btPathum:
+                if(click - prevp > 60000) {
+                    w.execute("http://ict.siit.tu.ac.th/~cholwich/pathumthani.json", "Pathum Weather");
+                    prevp = click;
+                    prevn =0;
+                    prevb=0;
+                }
                 break;
         }
     }
@@ -74,6 +103,11 @@ public class MainActivity extends ActionBarActivity {
         String title;
 
         double windSpeed;
+        double Temp;
+        double Tempmin;
+        double Tempmax;
+
+        double Humi;
 
         @Override
         protected void onPreExecute() {
@@ -104,6 +138,15 @@ public class MainActivity extends ActionBarActivity {
                     //Start parsing JSON
                     JSONObject jWeather = new JSONObject(buffer.toString());
                     JSONObject jWind = jWeather.getJSONObject("wind");
+                    JSONObject jTemp = jWeather.getJSONObject("main");
+                    JSONObject jHumi = jWeather.getJSONObject("main");
+                    Temp = jTemp.getDouble("temp");
+                    Temp = Temp -273;
+                    Tempmin = jTemp.getDouble("temp_min");
+                    Tempmin = Tempmin-273;
+                    Tempmax = jTemp.getDouble("temp_max");
+                    Tempmax = Tempmax-273;
+                    Humi = jHumi.getDouble("humidity");
                     windSpeed = jWind.getDouble("speed");
                     errorMsg = "";
                     return true;
@@ -126,7 +169,7 @@ public class MainActivity extends ActionBarActivity {
 
         @Override
         protected void onPostExecute(Boolean result) {
-            TextView tvTitle, tvWeather, tvWind;
+            TextView tvTitle, tvWeather, tvWind,tvHumid,tvTemp;
             if (pDialog.isShowing()) {
                 pDialog.dismiss();
             }
@@ -134,14 +177,20 @@ public class MainActivity extends ActionBarActivity {
             tvTitle = (TextView)findViewById(R.id.tvTitle);
             tvWeather = (TextView)findViewById(R.id.tvWeather);
             tvWind = (TextView)findViewById(R.id.tvWind);
+            tvHumid = (TextView)findViewById(R.id.tvHumid);
+            tvTemp = (TextView)findViewById(R.id.tvTemp);
 
             if (result) {
                 tvTitle.setText(title);
                 tvWind.setText(String.format("%.1f", windSpeed));
+                tvTemp.setText(String.format("%.1f (max = %.1f,min = %.1f)", Temp,Tempmax,Tempmin));
+                tvHumid.setText(String.format("%.0f", Humi)+"%");
             }
             else {
                 tvTitle.setText(errorMsg);
                 tvWeather.setText("");
+                tvHumid.setText("");
+                tvTemp.setText("");
                 tvWind.setText("");
             }
         }
